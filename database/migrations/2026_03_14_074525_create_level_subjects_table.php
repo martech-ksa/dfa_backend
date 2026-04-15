@@ -1,13 +1,33 @@
-Schema::create('level_subjects', function (Blueprint $table) {
+<?php
 
-    $table->id();
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-    $table->foreignId('program_id')->constrained()->cascadeOnDelete();
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('level_subjects', function (Blueprint $table) {
 
-    $table->foreignId('level_id')->constrained()->cascadeOnDelete();
+            $table->id();
 
-    $table->foreignId('subject_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('level_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-    $table->timestamps();
+            $table->foreignId('subject_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-});
+            $table->timestamps();
+
+            $table->unique(['level_id', 'subject_id']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('level_subjects');
+    }
+};

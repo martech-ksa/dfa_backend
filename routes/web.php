@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\ProfileController;
 
+// Admin Controllers
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\StudentController;
@@ -15,6 +16,10 @@ use App\Http\Controllers\Admin\ResultEntryController;
 use App\Http\Controllers\Admin\ClassSubjectController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\SettingController;
+
+// Staff Attendance
+use App\Http\Controllers\StaffAttendanceController;
 
 
 /*
@@ -45,7 +50,7 @@ Route::middleware('auth')->get('/dashboard', function () {
     }
 
     if ($user->hasRole('Teacher')) {
-        return redirect()->route('teacher.dashboard');
+        return redirect()->route('staff.attendance.dashboard'); // ✅ FIXED
     }
 
     if ($user->hasRole('Parent')) {
@@ -75,11 +80,42 @@ Route::middleware(['auth','role:Admin'])
         // Dashboard
         Route::get('/dashboard', [DashboardController::class,'index'])->name('dashboard');
 
-        // Users
-        Route::get('/users', [UserController::class,'index'])->name('users.index');
-        Route::post('/users/{user}/role', [UserController::class,'updateRole'])->name('users.updateRole');
+        /*
+        |--------------------------------------------------------------------------
+        | SETTINGS
+        |--------------------------------------------------------------------------
+        */
+        Route::get('/settings', [SettingController::class,'index'])->name('settings');
+        Route::post('/settings', [SettingController::class,'update'])->name('settings.update');
 
-        // Academic Structure
+
+        /*
+        |--------------------------------------------------------------------------
+        | USERS MANAGEMENT (✅ FIXED)
+        |--------------------------------------------------------------------------
+        */
+        Route::prefix('users')->group(function () {
+
+            Route::get('/', [UserController::class,'index'])
+                ->name('users.index');
+
+            Route::post('/store', [UserController::class,'store'])
+                ->name('users.store');
+
+            Route::post('/{user}/role', [UserController::class,'updateRole'])
+                ->name('users.updateRole');
+
+            Route::delete('/{user}', [UserController::class,'destroy'])
+                ->name('users.destroy');
+
+        });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ACADEMIC STRUCTURE
+        |--------------------------------------------------------------------------
+        */
         Route::resource('programs', ProgramController::class);
         Route::resource('levels', LevelController::class);
         Route::resource('classarms', ClassArmController::class);
@@ -102,42 +138,36 @@ Route::middleware(['auth','role:Admin'])
             Route::post('/promote', [PromotionController::class,'promote'])->name('promotions.promote');
         });
 
+
         /*
         |--------------------------------------------------------------------------
-        | RESULTS MODULE (UPDATED)
+        | RESULTS MODULE
         |--------------------------------------------------------------------------
         */
-
         Route::prefix('results')->group(function () {
 
-            // Main Page
             Route::get('/', [ResultEntryController::class,'index'])
                 ->name('results.index');
 
-            // Load Students + Subjects
             Route::post('/load-students', [ResultEntryController::class,'loadStudents'])
                 ->name('results.loadStudents');
 
-            // Save Results
             Route::post('/store', [ResultEntryController::class,'store'])
                 ->name('results.store');
 
-            // 🔥 NEW: Dynamic Filtering
             Route::get('/get-levels/{program}', [ResultEntryController::class,'getLevels']);
             Route::get('/get-class-arms/{level}', [ResultEntryController::class,'getClassArms']);
 
-            // View Result Sheet
             Route::get('/{student}/{class_arm}', [ResultEntryController::class, 'show'])
                 ->name('results.show');
-
         });
+
 
         /*
         |--------------------------------------------------------------------------
-        | Attendance
+        | STUDENT ATTENDANCE
         |--------------------------------------------------------------------------
         */
-
         Route::prefix('attendance')->group(function () {
 
             Route::get('/', [AttendanceController::class, 'index'])
@@ -148,10 +178,31 @@ Route::middleware(['auth','role:Admin'])
 
             Route::post('/store', [AttendanceController::class, 'store'])
                 ->name('attendance.store');
-
         });
 
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| STAFF ATTENDANCE (GEOFENCING)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])
+    ->prefix('staff')
+    ->name('staff.')
+    ->group(function () {
+
+        Route::get('/attendance', [StaffAttendanceController::class, 'index'])
+            ->name('attendance.dashboard');
+
+        Route::post('/attendance/check-in', [StaffAttendanceController::class, 'checkIn'])
+            ->name('attendance.checkin');
+
+        Route::post('/attendance/check-out', [StaffAttendanceController::class, 'checkOut'])
+            ->name('attendance.checkout');
+    });
 
 
 /*
@@ -177,7 +228,6 @@ Route::middleware(['auth','role:Teacher'])
 
             Route::post('/store', [ResultEntryController::class,'store'])
                 ->name('results.store');
-
         });
 
 });
@@ -195,7 +245,6 @@ Route::middleware(['auth','role:Parent'])
     ->group(function () {
 
         Route::get('/dashboard', fn() => view('parent.dashboard'))->name('dashboard');
-
 });
 
 
@@ -211,13 +260,12 @@ Route::middleware(['auth','role:Student'])
     ->group(function () {
 
         Route::get('/dashboard', fn() => view('student.dashboard'))->name('dashboard');
-
 });
 
 
 /*
 |--------------------------------------------------------------------------
-| Profile
+| PROFILE
 |--------------------------------------------------------------------------
 */
 
@@ -226,7 +274,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class,'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class,'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class,'destroy'])->name('profile.destroy');
-
 });
+
 
 require __DIR__.'/auth.php';

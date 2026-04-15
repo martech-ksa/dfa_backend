@@ -1,3 +1,39 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===== GLOBAL FIX ===== */
+html, body, #app {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* ===== BASE UI ===== */
+body {
+    background-color: #f9fafb;
+    color: #111827;
+}
+
+/* ===== CARD SYSTEM ===== */
+.card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 transition;
+}
+
+.card:hover {
+    @apply shadow-md;
+}
+
+/* ===== TEXT FIX ===== */
+.text-gray-500 {
+    color: #4b5563 !important;
+}
+
+/* ===== ICON SOFTNESS ===== */
+.icon-soft {
+    opacity: 0.8;
+}
+
+/* ===== SMOOTH UI ===== */
+* {
+    transition: all 0.15s ease-in-out;
+}

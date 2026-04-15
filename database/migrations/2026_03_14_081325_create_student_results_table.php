@@ -11,29 +11,33 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_results', function (Blueprint $table) {
+        // ✅ Create table only if it does NOT exist
+        if (!Schema::hasTable('student_results')) {
 
-            $table->id();
+            Schema::create('student_results', function (Blueprint $table) {
 
-            $table->foreignId('student_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+                $table->id();
 
-            $table->foreignId('subject_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+                $table->foreignId('student_id')
+                      ->constrained()
+                      ->cascadeOnDelete();
 
-            $table->integer('ca')->nullable();
+                $table->foreignId('subject_id')
+                      ->constrained()
+                      ->cascadeOnDelete();
 
-            $table->integer('exam')->nullable();
+                $table->integer('ca')->nullable();
+                $table->integer('exam')->nullable();
+                $table->integer('total')->nullable();
 
-            $table->integer('total')->nullable();
+                $table->string('grade')->nullable();
 
-            $table->string('grade')->nullable();
+                $table->timestamps();
 
-            $table->timestamps();
-
-        });
+                // ✅ Prevent duplicate entries per student per subject
+                $table->unique(['student_id', 'subject_id'], 'student_subject_unique');
+            });
+        }
     }
 
     /**
@@ -41,6 +45,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('student_results');
+        // ✅ Drop only if exists (safe rollback)
+        if (Schema::hasTable('student_results')) {
+            Schema::dropIfExists('student_results');
+        }
     }
 };

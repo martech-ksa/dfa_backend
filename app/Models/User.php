@@ -16,7 +16,6 @@ class User extends Authenticatable
      */
     protected $guard_name = 'web';
 
-
     /**
      * Mass assignable attributes
      */
@@ -24,8 +23,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'is_active',
     ];
-
 
     /**
      * Hidden attributes
@@ -35,15 +34,33 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-
     /**
      * Attribute casting
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | HELPERS
+    |--------------------------------------------------------------------------
+    */
+
+    public function isActive()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->is_active;
+    }
+
+    public function isInactive()
+    {
+        return !$this->is_active;
+    }
+
+    public function isAdmin()
+    {
+        return $this->hasRole('Admin');
     }
 }
